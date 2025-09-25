@@ -1,17 +1,33 @@
+"use client";
+import { useEffect, useState } from "react";
+import { auth } from "@/lib/firebaseConfig";
+import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 
-export default function ProfilePage() {
+export default function DashboardPage() {
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (!user) {
+        router.push("/login");
+      } else {
+        setLoading(false);
+      }
+    });
+    return () => unsubscribe();
+  }, [router]);
+
+  if (loading) {
+    return <p className="text-center mt-10">Carregando...</p>;
+  }
+
   return (
     <div>
       <Navbar />
-      <div className="flex justify-center items-center min-h-screen bg-gray-100">
-        <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
-          <h2 className="text-3xl font-bold mb-6 text-center text-indigo-700">Perfil do Usuário</h2>
-          <p className="mb-2"><strong>Nome:</strong> Usuário Teste</p>
-          <p className="mb-2"><strong>Email:</strong> usuario@email.com</p>
-          <p className="mb-6"><strong>CPF:</strong> 000.000.000-00</p>
-          <button className="w-full bg-indigo-700 text-white py-3 rounded-lg font-semibold hover:bg-indigo-800">Editar Perfil</button>
-        </div>
+      <div className="p-8">
+        <h2 className="text-3xl font-bold">Bem-vindo ao Dashboard</h2>
       </div>
     </div>
   );

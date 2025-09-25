@@ -1,38 +1,27 @@
 "use client";
-import Link from "next/link";
-import { useState } from "react";
+import { auth } from "@/lib/firebaseConfig";
+import { signOut } from "firebase/auth";
+import { useRouter } from "next/navigation";
 
 export default function Navbar() {
-  const [open, setOpen] = useState(false);
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    router.push("/login");
+  };
 
   return (
-    <nav className="bg-white shadow-md">
-      <div className="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
-        <Link href="/" className="text-2xl font-bold text-orange-600">
-          FinTrack
-        </Link>
-
-        <div className="hidden md:flex gap-6">
-          <Link href="/dashboard" className="hover:text-orange-600">Dashboard</Link>
-          <Link href="/profile" className="hover:text-orange-600">Perfil</Link>
-          <Link href="/login" className="hover:text-orange-600">Entrar</Link>
-        </div>
-
+    <nav className="flex items-center justify-between bg-primary text-white px-6 py-3 shadow">
+      <h1 className="font-bold text-xl">FinTrack</h1>
+      <div className="flex items-center gap-4">
         <button
-          onClick={() => setOpen(!open)}
-          className="md:hidden text-orange-600"
+          onClick={handleLogout}
+          className="bg-white text-primary px-4 py-2 rounded-lg font-semibold hover:bg-gray-100"
         >
-          ☰
+          Sair
         </button>
       </div>
-
-      {open && (
-        <div className="md:hidden flex flex-col bg-white border-t p-4 gap-4">
-          <Link href="/dashboard">Dashboard</Link>
-          <Link href="/profile">Perfil</Link>
-          <Link href="/login">Entrar</Link>
-        </div>
-      )}
     </nav>
   );
 }
