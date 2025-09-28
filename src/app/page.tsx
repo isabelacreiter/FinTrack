@@ -1,14 +1,32 @@
-export default function Home() {
+"use client";
+
+import { useEffect } from "react";
+import { auth } from "@/lib/firebaseConfig";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+
+export default function HomePage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) {
+        router.push("/dashboard"); 
+      }
+    });
+    return () => unsubscribe();
+  }, [router]);
+
   return (
-    <main className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-orange-100 to-white text-gray-900">
+    <main className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-purple-100 to-white text-gray-900">
       <section className="text-center py-20 px-6">
-        <h1 className="text-5xl font-bold text-[var(--color-primary)]">FinTrack</h1>
+        <h1 className="text-5xl font-bold text-primary">FinTrack</h1>
         <p className="mt-4 text-lg text-gray-600">
           Sua plataforma inteligente de gestão financeira pessoal.
         </p>
         <div className="mt-6 flex gap-4 justify-center">
-          <a href="/register" className="btn-primary">Criar Conta</a>
-          <a href="/login" className="btn-secondary">Entrar</a>
+          <Link href="/register" className="btn-primary">Criar Conta</Link>
+          <Link href="/login" className="btn-secondary">Entrar</Link>
         </div>
       </section>
 

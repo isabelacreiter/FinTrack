@@ -3,8 +3,8 @@
 @tailwind utilities;
 
 :root {
-  --color-primary: #ef8019;
-  --color-primary-light: #ff9f43;
+  --color-primary: #6d28d9; /* Roxo vibrante */
+  --color-primary-light: #8b5cf6;
   --color-gray-50: #f9fafb;
   --color-gray-100: #f3f4f6;
   --color-gray-200: #e5e7eb;
@@ -103,7 +103,7 @@ body {
 .input:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(239, 128, 25, 0.2);
+  box-shadow: 0 0 0 3px rgba(109, 40, 217, 0.2);
 }
 
 /* Textos */
