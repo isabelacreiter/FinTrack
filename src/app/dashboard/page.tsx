@@ -9,13 +9,26 @@ import { Pie } from "react-chartjs-2";
 import "chart.js/auto";
 import toast from "react-hot-toast";
 
+// Função para formatar moeda em Real
+const formatarMoeda = (valor: number) =>
+  valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+// Função para formatar datas
+const formatarData = (data: string) =>
+  new Date(data).toLocaleDateString("pt-BR");
+
 export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [receitas, setReceitas] = useState<number>(0);
   const [despesas, setDespesas] = useState<number>(0);
   const [alertas, setAlertas] = useState<any[]>([]);
-  const [cotacao, setCotacao] = useState<{ dolar: number; ibovespa: number }>({ dolar: 0, ibovespa: 0 });
-  const [categoriasDespesas, setCategoriasDespesas] = useState<{ [key: string]: number }>({});
+  const [cotacao, setCotacao] = useState<{ dolar: number; ibovespa: number }>({
+    dolar: 0,
+    ibovespa: 0,
+  });
+  const [categoriasDespesas, setCategoriasDespesas] = useState<{
+    [key: string]: number;
+  }>({});
   const router = useRouter();
 
   useEffect(() => {
@@ -74,11 +87,13 @@ export default function DashboardPage() {
   const carregarCotacoes = async () => {
     try {
       // Dólar
-      const respDolar = await fetch("https://economia.awesomeapi.com.br/json/last/USD-BRL");
+      const respDolar = await fetch(
+        "https://economia.awesomeapi.com.br/json/last/USD-BRL"
+      );
       const dolarData = await respDolar.json();
       const dolar = parseFloat(dolarData.USDBRL.bid);
 
-      // Ibovespa - BrAPI (confiável)
+      // Ibovespa - BrAPI
       const respIbov = await fetch("https://brapi.dev/api/quote/^BVSP");
       const ibovData = await respIbov.json();
       const ibovespa = ibovData?.results?.[0]?.regularMarketPrice
@@ -103,26 +118,46 @@ export default function DashboardPage() {
   const categorias = Object.keys(categoriasDespesas);
   const valores = Object.values(categoriasDespesas);
   const cores = [
-    "#ef4444", "#f97316", "#eab308", "#22c55e", "#3b82f6", 
-    "#8b5cf6", "#ec4899", "#6b7280", "#10b981", "#f43f5e"
+    "#ef4444",
+    "#f97316",
+    "#eab308",
+    "#22c55e",
+    "#3b82f6",
+    "#8b5cf6",
+    "#ec4899",
+    "#6b7280",
+    "#10b981",
+    "#f43f5e",
   ];
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Navbar />
       <main className="flex-grow p-4 md:p-8 max-w-6xl mx-auto w-full space-y-8">
-        <h2 className="text-3xl font-bold text-[var(--color-primary)]">Dashboard</h2>
+        <h2 className="text-3xl font-bold text-[var(--color-primary)]">
+          Dashboard
+        </h2>
 
         {/* 🔹 Balanço Geral */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card title="Receitas" value={`R$ ${receitas.toFixed(2)}`} color="bg-green-100" />
-          <Card title="Despesas" value={`R$ ${despesas.toFixed(2)}`} color="bg-red-100" />
-          <Card title="Saldo" value={`R$ ${saldo.toFixed(2)}`} color="bg-blue-100" />
+          <Card
+            title="Receitas"
+            value={formatarMoeda(receitas)}
+            color="bg-green-100"
+          />
+          <Card
+            title="Despesas"
+            value={formatarMoeda(despesas)}
+            color="bg-red-100"
+          />
+          <Card title="Saldo" value={formatarMoeda(saldo)} color="bg-blue-100" />
         </div>
 
         {/* 🔹 Gráfico: Distribuição de Despesas por Categoria */}
         <div className="bg-white p-6 rounded-xl shadow-md">
-          <h3 className="text-xl font-semibold mb-4">Distribuição de Despesas por Categoria</h3>
+          <h3 className="text-xl font-semibold mb-4">
+            Distribuição de Despesas por Categoria
+          </h3>
           {categorias.length > 0 ? (
             <Pie
               data={{
@@ -137,10 +172,11 @@ export default function DashboardPage() {
               options={{
                 plugins: {
                   legend: {
-                    position: 'bottom' as const,
+                    position: "bottom" as const,
                   },
                 },
               }}
+              aria-label="Gráfico de pizza mostrando a distribuição de despesas por categoria"
             />
           ) : (
             <p className="text-gray-500">Nenhuma despesa cadastrada ainda.</p>
@@ -149,26 +185,59 @@ export default function DashboardPage() {
 
         {/* 🔹 Alertas de Vencimento (próximos 7 dias) */}
         <div className="bg-white p-6 rounded-xl shadow-md">
-          <h3 className="text-xl font-semibold mb-4">Alertas de Vencimento (Próximos 7 Dias)</h3>
+          <h3 className="text-xl font-semibold mb-4">
+            Alertas de Vencimento (Próximos 7 Dias)
+          </h3>
           {alertas.length === 0 ? (
-            <p className="text-gray-500">Nenhuma despesa vencendo nos próximos dias 🎉</p>
+            <p className="text-gray-500">
+              Nenhuma despesa vencendo nos próximos dias 🎉
+            </p>
           ) : (
             <ul className="space-y-2">
-              {alertas.map((item, i) => (
-                <li key={i} className="p-3 bg-red-50 rounded-lg border-l-4 border-red-500">
-                  <strong>{item.descricao}</strong> - R$ {item.valor}  
-                  <br />
-                  <span className="text-sm text-gray-600">Vencimento: {item.data}</span>
-                </li>
-              ))}
+              {alertas.map((item, i) => {
+                const diasRestantes =
+                  (new Date(item.data).getTime() - new Date().getTime()) /
+                  (1000 * 60 * 60 * 24);
+                const destaque =
+                  diasRestantes <= 2
+                    ? "border-red-600 bg-red-100"
+                    : "border-red-500 bg-red-50";
+                return (
+                  <li
+                    key={i}
+                    className={`p-3 rounded-lg border-l-4 ${destaque}`}
+                  >
+                    <strong>{item.descricao}</strong> -{" "}
+                    {formatarMoeda(Number(item.valor))}
+                    <br />
+                    <span className="text-sm text-gray-600">
+                      Vencimento: {formatarData(item.data)}
+                    </span>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>
 
         {/* 🔹 Cotações */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card title="Dólar Hoje" value={`R$ ${cotacao.dolar.toFixed(2)}`} color="bg-yellow-100" />
-          <Card title="Ibovespa" value={`${cotacao.ibovespa.toLocaleString('pt-BR')} pts`} color="bg-purple-100" />
+          <Card
+            title="Dólar Hoje"
+            value={
+              cotacao.dolar ? formatarMoeda(cotacao.dolar) : "Indisponível"
+            }
+            color="bg-yellow-100"
+          />
+          <Card
+            title="Ibovespa"
+            value={
+              cotacao.ibovespa
+                ? `${cotacao.ibovespa.toLocaleString("pt-BR")} pts`
+                : "Indisponível"
+            }
+            color="bg-purple-100"
+          />
         </div>
       </main>
     </div>

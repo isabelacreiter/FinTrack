@@ -1,53 +1,53 @@
 "use client";
+
 import { useState } from "react";
 import { auth } from "@/lib/firebaseConfig";
 import { sendPasswordResetEmail } from "firebase/auth";
-import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import Link from "next/link";
+import Navbar from "@/components/Navbar";
 
 export default function ResetPasswordPage() {
   const [email, setEmail] = useState("");
-  const [loading, setLoading] = useState(false);
-  const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     try {
       await sendPasswordResetEmail(auth, email);
-      toast.success("Link de recuperação enviado para seu e-mail!");
-      router.push("/login");
-    } catch (err) {
-      toast.error("E-mail não encontrado ou inválido.");
-    } finally {
-      setLoading(false);
+      toast.success("Enviamos um link de redefinição para seu e-mail.");
+    } catch {
+      toast.error("Erro ao enviar link. Verifique o e-mail.");
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50">
-      <div className="bg-white shadow-lg rounded-2xl p-8 w-full max-w-md">
-        <h2 className="text-2xl font-bold text-center text-[var(--color-primary)] mb-6">Recuperar Senha</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <input
-            type="email"
-            placeholder="Seu e-mail"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="input w-full"
-            required
-          />
-          <button type="submit" className="btn-primary w-full" disabled={loading}>
-            {loading ? "Enviando..." : "Enviar Link"}
-          </button>
-        </form>
-        <p className="mt-4 text-center">
-          <Link href="/login" className="text-[var(--color-primary)] hover:underline">
-            Voltar ao login
-          </Link>
-        </p>
-      </div>
+    <div className="min-h-screen flex flex-col bg-gray-50">
+      <Navbar />
+      <main className="flex-grow flex items-center justify-center">
+        <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
+          <h2 className="text-2xl font-bold text-center text-[var(--color-primary)] mb-6">
+            Recuperar Senha
+          </h2>
+          <form onSubmit={handleReset} className="space-y-4">
+            <input
+              type="email"
+              placeholder="Digite seu e-mail"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="input w-full"
+              required
+            />
+            <button type="submit" className="btn-primary w-full">
+              Enviar Link
+            </button>
+          </form>
+          <p className="mt-4 text-center text-gray-600">
+            <Link href="/login" className="text-[var(--color-primary)] hover:underline">
+              Voltar ao login
+            </Link>
+          </p>
+        </div>
+      </main>
     </div>
   );
 }
