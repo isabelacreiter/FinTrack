@@ -1,15 +1,15 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { auth, db } from "@/lib/firebaseConfig";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
-import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 import Navbar from "@/components/Navbar";
 
 interface TransactionData {
   descricao: string;
   valor: string;
-  data: string; // Corrigido aqui
+  data: string;
   categoria: string;
   status: string;
 }
@@ -33,13 +33,19 @@ export default function EditTransactionPage({ params }: PageProps) {
 
   useEffect(() => {
     const load = async () => {
-      if (!type) return;
+      if (!type || !auth.currentUser) return;
       try {
         const col = type === "receita" ? "receitas" : "despesas";
-        const docRef = doc(db, "users", auth.currentUser!.uid, col, params.id);
+        const docRef = doc(db, "users", auth.currentUser.uid, col, params.id);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
-          setFormData(docSnap.data() as TransactionData);
+          setFormData({
+            descricao: docSnap.data().descricao || "",
+            valor: String(docSnap.data().valor ?? ""),
+            data: docSnap.data().data || "",
+            categoria: docSnap.data().categoria || "",
+            status: docSnap.data().status || "Pendente",
+          });
         }
       } catch {
         toast.error("Erro ao carregar.");
@@ -50,16 +56,15 @@ export default function EditTransactionPage({ params }: PageProps) {
     load();
   }, [params.id, type]);
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!type) return;
-    if (!auth.currentUser) {
-      toast.error("Usuário não autenticado.");
-      return;
-    }
+    if (!type || !auth.currentUser) return;
     try {
       const col = type === "receita" ? "receitas" : "despesas";
-      // Garante que valor seja número ao salvar
       const dataToSave = { ...formData, valor: Number(formData.valor) };
       await updateDoc(doc(db, "users", auth.currentUser.uid, col, params.id), dataToSave);
       toast.success("Atualizado com sucesso!");
@@ -78,50 +83,56 @@ export default function EditTransactionPage({ params }: PageProps) {
         <h2 className="text-3xl font-bold text-[var(--color-primary)] mb-6">
           Editar {type === "receita" ? "Receita" : "Despesa"}
         </h2>
-        <form onSubmit={handleSubmit} className="bg-white p-6 rounded-xl shadow-md space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <input
             type="text"
+            name="descricao"
             placeholder="Descrição"
             value={formData.descricao}
-            onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
-            className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+            onChange={handleChange}
+            className="input w-full"
             required
           />
           <input
             type="number"
+            name="valor"
             placeholder="Valor"
             value={formData.valor}
-            onChange={(e) => setFormData({ ...formData, valor: e.target.value })}
-            className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+            onChange={handleChange}
+            className="input w-full"
             required
+            min="0"
+            step="0.01"
           />
           <input
             type="date"
+            name="data"
             value={formData.data}
-            onChange={(e) => setFormData({ ...formData, data: e.target.value })}
-            className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+            onChange={handleChange}
+            className="input w-full"
             required
           />
           <input
             type="text"
-            placeholder="Categoria"
+            name="categoria"
+            placeholder={type === "receita" ? "Origem" : "Categoria"}
             value={formData.categoria}
-            onChange={(e) => setFormData({ ...formData, categoria: e.target.value })}
-            className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-            required
+            onChange={handleChange}
+            className="input w-full"
           />
           {type === "despesa" && (
             <select
+              name="status"
               value={formData.status}
-              onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-              className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+              onChange={handleChange}
+              className="input w-full"
             >
-              <option value="Pago">Pago</option>
               <option value="Pendente">Pendente</option>
+              <option value="Pago">Pago</option>
             </select>
           )}
           <button type="submit" className="btn-primary w-full">
-            Salvar Alterações
+            Salvar
           </button>
         </form>
       </main>

@@ -14,7 +14,7 @@ interface Transaction {
   type: "despesa" | "receita";
   descricao: string;
   valor: number;
-  data: string; // Corrigido aqui
+  data: string;
   categoria: string;
   status?: string;
 }
@@ -25,52 +25,48 @@ export default function TransactionsPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const loadTransactions = async () => {
-      const user = auth.currentUser;
+    let isMounted = true;
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (!user) {
         router.push("/login");
         return;
       }
-
       try {
         const uid = user.uid;
-        const receitasSnap = await getDocs(collection(db, "users", uid, "receitas"));
-        const despesasSnap = await getDocs(collection(db, "users", uid, "despesas"));
-
+        // Busca receitas e despesas em paralelo
+        const [receitasSnap, despesasSnap] = await Promise.all([
+          getDocs(collection(db, "users", uid, "receitas")),
+          getDocs(collection(db, "users", uid, "despesas")),
+        ]);
         const all: Transaction[] = [];
-
         receitasSnap.forEach((doc) => {
           all.push({ id: doc.id, type: "receita", ...doc.data() } as Transaction);
         });
-
         despesasSnap.forEach((doc) => {
           all.push({ id: doc.id, type: "despesa", ...doc.data() } as Transaction);
         });
-
-        // Ordenar por data (mais recente primeiro)
         all.sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime());
-
-        setTransactions(all);
-      } catch (error) {
-        console.error("Erro ao carregar transações:", error);
+        if (isMounted) setTransactions(all);
+      } catch {
         toast.error("Erro ao carregar transações.");
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
+    });
+    return () => {
+      isMounted = false;
+      unsubscribe();
     };
-
-    loadTransactions();
   }, [router]);
 
   const handleDelete = async (id: string, type: "receita" | "despesa") => {
     if (!confirm("Tem certeza que deseja excluir esta transação?")) return;
-
     try {
       const col = type === "receita" ? "receitas" : "despesas";
       await deleteDoc(doc(db, "users", auth.currentUser!.uid, col, id));
       setTransactions((prev) => prev.filter((t) => t.id !== id));
       toast.success("Transação excluída!");
-    } catch (error) {
+    } catch {
       toast.error("Erro ao excluir transação.");
     }
   };
@@ -79,7 +75,7 @@ export default function TransactionsPage() {
     return (
       <div className="min-h-screen flex flex-col bg-gray-50">
         <Navbar />
-        <p className="text-center mt-10">Carregando...</p>
+        <div className="text-center mt-10 animate-pulse text-gray-400">Carregando transações...</div>
       </div>
     );
   }
@@ -89,7 +85,7 @@ export default function TransactionsPage() {
       <Navbar />
       <main className="flex-grow p-4 md:p-8 max-w-4xl mx-auto w-full">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Minhas Transações</h1>
+          <h1 className="text-3xl font-bold text-[var(--color-primary)]">Minhas Transações</h1>
           <div className="flex gap-2">
             <Link href="/add-income" className="btn-secondary text-sm px-3 py-1.5">
               + Receita
@@ -99,7 +95,6 @@ export default function TransactionsPage() {
             </Link>
           </div>
         </div>
-
         {transactions.length === 0 ? (
           <p className="text-gray-500">Nenhuma transação cadastrada.</p>
         ) : (
