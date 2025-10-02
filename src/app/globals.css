@@ -3,7 +3,8 @@
 @tailwind utilities;
 
 :root {
-  --color-primary: #6d28d9; /* Roxo vibrante */
+  --color-primary: #6d28d9;       /* Roxo principal */
+  --color-secondary: #4c1d95;     /* Roxo mais escuro para botões */
   --color-primary-light: #8b5cf6;
   --color-gray-50: #f9fafb;
   --color-gray-100: #f3f4f6;
@@ -17,7 +18,6 @@
   --color-yellow-100: #fef9c3;
   --color-purple-100: #f3e8ff;
 }
-
 * {
   margin: 0;
   padding: 0;
