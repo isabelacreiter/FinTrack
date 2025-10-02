@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import Link from "next/link";
 
-// Validação real de CPF via API
 async function validarCPF(cpf: string): Promise<boolean> {
   if (!/^\d{3}\.\d{3}\.\d{3}\-\d{2}$/.test(cpf)) return false;
   try {
@@ -28,7 +27,6 @@ export default function RegisterPage() {
     e.preventDefault();
     setLoading(true);
 
-    // Validação de CPF
     if (!(await validarCPF(form.cpf))) {
       toast.error("CPF inválido ou inexistente. Use o formato 000.000.000-00");
       setLoading(false);
@@ -39,22 +37,24 @@ export default function RegisterPage() {
       const userCredential = await createUserWithEmailAndPassword(auth, form.email, form.password);
       const user = userCredential.user;
 
-      // Salva dados no Firestore
       await setDoc(doc(db, "users", user.uid), {
         name: form.name,
         email: form.email,
         cpf: form.cpf,
       });
 
-      // Envia e-mail de verificação
       await sendEmailVerification(user);
       toast.success("Conta criada! Verifique seu e-mail para ativar.");
       router.push("/login");
-    } catch (err: any) {
-      if (err.code === "auth/email-already-in-use") {
-        toast.error("Este e-mail já está em uso.");
-      } else if (err.code === "auth/weak-password") {
-        toast.error("A senha deve ter pelo menos 6 caracteres.");
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        if (error.message.includes("email-already-in-use")) {
+          toast.error("Este e-mail já está em uso.");
+        } else if (error.message.includes("weak-password")) {
+          toast.error("A senha deve ter pelo menos 6 caracteres.");
+        } else {
+          toast.error("Erro ao cadastrar. Tente novamente.");
+        }
       } else {
         toast.error("Erro ao cadastrar. Tente novamente.");
       }

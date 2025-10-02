@@ -6,8 +6,20 @@ import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 import Navbar from "@/components/Navbar";
 
-export default function EditTransactionPage({ params }: { params: { id: string } }) {
-  const [formData, setFormData] = useState({
+interface TransactionData {
+  descricao: string;
+  valor: string;
+  data: string; // Corrigido aqui
+  categoria: string;
+  status: string;
+}
+
+interface PageProps {
+  params: { id: string };
+}
+
+export default function EditTransactionPage({ params }: PageProps) {
+  const [formData, setFormData] = useState<TransactionData>({
     descricao: "",
     valor: "",
     data: "",
@@ -24,11 +36,12 @@ export default function EditTransactionPage({ params }: { params: { id: string }
       if (!type) return;
       try {
         const col = type === "receita" ? "receitas" : "despesas";
-        const docSnap = await getDoc(doc(db, "users", auth.currentUser!.uid, col, params.id));
+        const docRef = doc(db, "users", auth.currentUser!.uid, col, params.id);
+        const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
-          setFormData(docSnap.data() as any);
+          setFormData(docSnap.data() as TransactionData);
         }
-      } catch (err) {
+      } catch {
         toast.error("Erro ao carregar.");
       } finally {
         setLoading(false);
@@ -37,15 +50,21 @@ export default function EditTransactionPage({ params }: { params: { id: string }
     load();
   }, [params.id, type]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!type) return;
+    if (!auth.currentUser) {
+      toast.error("Usuário não autenticado.");
+      return;
+    }
     try {
       const col = type === "receita" ? "receitas" : "despesas";
-      await updateDoc(doc(db, "users", auth.currentUser!.uid, col, params.id), formData);
+      // Garante que valor seja número ao salvar
+      const dataToSave = { ...formData, valor: Number(formData.valor) };
+      await updateDoc(doc(db, "users", auth.currentUser.uid, col, params.id), dataToSave);
       toast.success("Atualizado com sucesso!");
       router.push("/transactions");
-    } catch (err) {
+    } catch {
       toast.error("Erro ao salvar.");
     }
   };

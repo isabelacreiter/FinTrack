@@ -27,7 +27,7 @@ export default function LoginPage() {
 
       toast.success("Login realizado com sucesso!");
       router.push("/dashboard");
-    } catch (err: any) {
+    } catch {
       toast.error("E-mail ou senha inválidos.");
     } finally {
       setLoading(false);

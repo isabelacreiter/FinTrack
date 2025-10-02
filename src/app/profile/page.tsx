@@ -28,7 +28,7 @@ export default function ProfilePage() {
           setEmail(data.email || "");
           setCpf(data.cpf || "");
         }
-      } catch (err) {
+      } catch {
         toast.error("Erro ao carregar perfil.");
       } finally {
         setLoading(false);
@@ -41,7 +41,7 @@ export default function ProfilePage() {
     try {
       await updateDoc(doc(db, "users", auth.currentUser!.uid), { name, cpf });
       toast.success("Perfil atualizado!");
-    } catch (err) {
+    } catch {
       toast.error("Erro ao salvar.");
     }
   };
