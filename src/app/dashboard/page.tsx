@@ -13,7 +13,7 @@ import toast from "react-hot-toast";
 interface DespesaFirestore {
   descricao: string;
   valor: number | string;
-  data: string; // Corrigido aqui
+  data: string;
   categoria?: string;
   status: string;
 }
@@ -23,7 +23,6 @@ interface Cotacao {
   ibovespa: number;
 }
 
-// Funções auxiliares
 const formatarMoeda = (valor: number) =>
   valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -122,64 +121,81 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 via-white to-purple-100">
       <Navbar />
-      <main className="flex-grow p-4 md:p-8 max-w-6xl mx-auto w-full space-y-8">
-        <h2 className="text-3xl font-bold text-[var(--color-primary)]">Dashboard</h2>
+      <main className="flex-grow p-4 md:p-8 max-w-6xl mx-auto w-full space-y-10">
+        <h2 className="text-4xl font-extrabold text-center text-[var(--color-primary)] mb-8 drop-shadow">
+          Dashboard Financeiro
+        </h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card title="Receitas" value={formatarMoeda(receitas)} color="bg-green-100" />
-          <Card title="Despesas" value={formatarMoeda(despesas)} color="bg-red-100" />
-          <Card title="Saldo" value={formatarMoeda(saldo)} color="bg-blue-100" />
+        {/* Cards principais */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <Card title="Receitas" value={formatarMoeda(receitas)} color="bg-gradient-to-r from-green-200 to-green-100" />
+          <Card title="Despesas" value={formatarMoeda(despesas)} color="bg-gradient-to-r from-red-200 to-red-100" />
+          <Card title="Saldo" value={formatarMoeda(saldo)} color="bg-gradient-to-r from-blue-200 to-blue-100" />
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-md">
-          <h3 className="text-xl font-semibold mb-4">Distribuição de Despesas por Categoria</h3>
+        {/* Gráfico de pizza */}
+        <section className="bg-white/80 p-8 rounded-2xl shadow-xl flex flex-col items-center">
+          <h3 className="text-2xl font-semibold mb-6 text-gray-700">Despesas por Categoria</h3>
           {categorias.length > 0 ? (
-            <Pie
-              data={{
-                labels: categorias,
-                datasets: [{ data: valores, backgroundColor: cores.slice(0, categorias.length) }],
-              }}
-              options={{ plugins: { legend: { position: "bottom" as const } } }}
-              aria-label="Gráfico de pizza mostrando a distribuição de despesas por categoria"
-            />
+            <div className="w-full max-w-md">
+              <Pie
+                data={{
+                  labels: categorias,
+                  datasets: [{ data: valores, backgroundColor: cores.slice(0, categorias.length) }],
+                }}
+                options={{
+                  plugins: { legend: { position: "bottom" as const } },
+                  responsive: true,
+                  maintainAspectRatio: false,
+                }}
+                height={250}
+                aria-label="Gráfico de pizza mostrando a distribuição de despesas por categoria"
+              />
+            </div>
           ) : (
             <p className="text-gray-500">Nenhuma despesa cadastrada ainda.</p>
           )}
-        </div>
+        </section>
 
-        <div className="bg-white p-6 rounded-xl shadow-md">
-          <h3 className="text-xl font-semibold mb-4">Alertas de Vencimento (Próximos 7 Dias)</h3>
+        {/* Alertas de vencimento */}
+        <section className="bg-white/80 p-8 rounded-2xl shadow-xl">
+          <h3 className="text-2xl font-semibold mb-6 text-gray-700">Alertas de Vencimento <span className="text-base text-gray-400">(Próximos 7 Dias)</span></h3>
           {alertas.length === 0 ? (
-            <p className="text-gray-500">Nenhuma despesa vencendo nos próximos dias 🎉</p>
+            <p className="text-gray-500 text-center">Nenhuma despesa vencendo nos próximos dias 🎉</p>
           ) : (
-            <ul className="space-y-2">
+            <ul className="space-y-3">
               {alertas.map((item, i) => {
                 const diasRestantes = (new Date(item.data).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24);
-                const destaque = diasRestantes <= 2 ? "border-red-600 bg-red-100" : "border-red-500 bg-red-50";
+                const destaque = diasRestantes <= 2 ? "border-red-600 bg-red-100" : "border-red-400 bg-red-50";
                 return (
-                  <li key={i} className={`p-3 rounded-lg border-l-4 ${destaque}`}>
-                    <strong>{item.descricao}</strong> - {formatarMoeda(Number(item.valor))}
-                    <br />
-                    <span className="text-sm text-gray-600">Vencimento: {formatarData(item.data)}</span>
+                  <li key={i} className={`p-4 rounded-lg border-l-8 ${destaque} flex flex-col md:flex-row md:items-center md:justify-between`}>
+                    <div>
+                      <strong className="text-lg">{item.descricao}</strong> - <span className="font-medium">{formatarMoeda(Number(item.valor))}</span>
+                      <div className="text-sm text-gray-600">Vencimento: {formatarData(item.data)}</div>
+                    </div>
+                    <span className="mt-2 md:mt-0 text-xs text-red-700 font-bold">
+                      {Math.ceil(diasRestantes)} dia(s) restante(s)
+                    </span>
                   </li>
                 );
               })}
             </ul>
           )}
-        </div>
+        </section>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Cotações */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <Card
             title="Dólar Hoje"
             value={cotacao.dolar ? formatarMoeda(cotacao.dolar) : "Indisponível"}
-            color="bg-yellow-100"
+            color="bg-gradient-to-r from-yellow-200 to-yellow-100"
           />
           <Card
             title="Ibovespa"
             value={cotacao.ibovespa ? `${cotacao.ibovespa.toLocaleString("pt-BR")} pts` : "Indisponível"}
-            color="bg-purple-100"
+            color="bg-gradient-to-r from-purple-200 to-purple-100"
           />
         </div>
       </main>
