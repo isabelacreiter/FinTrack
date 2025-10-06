@@ -2,14 +2,18 @@
 import { signInWithPopup, GoogleAuthProvider, GithubAuthProvider } from "firebase/auth";
 import { auth } from "@/lib/firebaseConfig";
 import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
 
 export default function SocialLogin() {
+  const router = useRouter();
+
   const handleGoogleLogin = async () => {
     try {
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
       toast.success("Login com Google realizado!");
-    } catch {
+      router.push("/dashboard");
+    } catch (e) {
       toast.error("Erro ao fazer login com Google.");
     }
   };
@@ -19,7 +23,8 @@ export default function SocialLogin() {
       const provider = new GithubAuthProvider();
       await signInWithPopup(auth, provider);
       toast.success("Login com GitHub realizado!");
-    } catch {
+      router.push("/dashboard");
+    } catch (e) {
       toast.error("Erro ao fazer login com GitHub.");
     }
   };

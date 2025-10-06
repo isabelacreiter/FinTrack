@@ -15,10 +15,8 @@ async function validarCPF(cpf: string): Promise<{ valid: boolean; message?: stri
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ cpf }),
     });
-    const json = await resp.json();
-    return json;
-  } catch (e) {
-    console.error("Erro ao chamar rota validar-cpf:", e);
+    return await resp.json();
+  } catch {
     return { valid: false, message: "Erro de rede ou servidor" };
   }
 }
@@ -35,7 +33,7 @@ export default function RegisterPage() {
     // Validação de CPF
     const { valid, message } = await validarCPF(form.cpf);
     if (!valid) {
-      toast.error(message || "CPF inválido ou inexistente. Use o formato 000.000.000-00");
+      toast.error(message || "CPF inválido.");
       setLoading(false);
       return;
     }
