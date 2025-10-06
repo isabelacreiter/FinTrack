@@ -7,14 +7,19 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import Link from "next/link";
 
-async function validarCPF(cpf: string): Promise<boolean> {
-  if (!/^\d{3}\.\d{3}\.\d{3}\-\d{2}$/.test(cpf)) return false;
+// Função para validar CPF usando sua rota local (que pode chamar a API externa)
+async function validarCPF(cpf: string): Promise<{ valid: boolean; message?: string }> {
   try {
-    const res = await fetch(`https://api-digitacao-cpf.vercel.app/api/validate?cpf=${cpf}`);
-    const data = await res.json();
-    return data.valid === true;
-  } catch {
-    return false;
+    const resp = await fetch("/api/validar-cpf", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ cpf }),
+    });
+    const json = await resp.json();
+    return json;
+  } catch (e) {
+    console.error("Erro ao chamar rota validar-cpf:", e);
+    return { valid: false, message: "Erro de rede ou servidor" };
   }
 }
 
@@ -27,8 +32,10 @@ export default function RegisterPage() {
     e.preventDefault();
     setLoading(true);
 
-    if (!(await validarCPF(form.cpf))) {
-      toast.error("CPF inválido ou inexistente. Use o formato 000.000.000-00");
+    // Validação de CPF
+    const { valid, message } = await validarCPF(form.cpf);
+    if (!valid) {
+      toast.error(message || "CPF inválido ou inexistente. Use o formato 000.000.000-00");
       setLoading(false);
       return;
     }
